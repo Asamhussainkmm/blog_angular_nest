@@ -18,34 +18,90 @@ const typeorm_1 = require("@nestjs/typeorm");
 const user_entitiy_1 = require("../model/user.entitiy");
 const typeorm_2 = require("typeorm");
 const rxjs_1 = require("rxjs");
+const auth_service_1 = require("../../auth/service/auth.service");
+const console_1 = require("console");
 let UserService = class UserService {
-    constructor(userRepository) {
+    constructor(authService, userRepository) {
+        this.authService = authService;
         this.userRepository = userRepository;
     }
     createUser(user) {
-        return (0, rxjs_1.from)(this.userRepository.save(user));
+        return this.authService.generateHashPassword(user.password).pipe((0, rxjs_1.switchMap)((passwordHash) => {
+            const newUser = new user_entitiy_1.UserEntity();
+            newUser.name = user.name;
+            newUser.username = user.username;
+            newUser.email = user.email;
+            newUser.password = passwordHash;
+            newUser.roles = user.roles;
+            return (0, rxjs_1.from)(this.userRepository.save(newUser)).pipe((0, rxjs_1.map)((user) => {
+                const { password, ...result } = user;
+                return result;
+            }));
+        }));
     }
     getUserById(id) {
         return (0, rxjs_1.from)(this.userRepository.findOne({
             where: {
                 id
             }
+        })).pipe((0, rxjs_1.map)((user) => {
+            const { password, ...results } = user;
+            return results;
         }));
     }
     getAllUsers() {
-        return (0, rxjs_1.from)(this.userRepository.find());
+        return (0, rxjs_1.from)(this.userRepository.find()).pipe((0, rxjs_1.map)((users) => {
+            users.forEach(user => delete user.password);
+            return users;
+        }));
     }
     deleteUserById(id) {
         return (0, rxjs_1.from)(this.userRepository.delete(id));
     }
     updateUser(id, user) {
+        delete user.email;
+        delete user.password;
+        return (0, rxjs_1.from)(this.userRepository.update(id, user));
+    }
+    login(user) {
+        return this.validateUser(user.email, user.password).pipe((0, rxjs_1.switchMap)((user) => {
+            if (user) {
+                return this.authService.generateJwtToken(user);
+            }
+            else {
+                return "Wrong Credintials";
+            }
+        }));
+    }
+    validateUser(email, password) {
+        return this.getUserByEmail(email).pipe((0, rxjs_1.switchMap)((user) => {
+            return this.authService.comparePassword(password, user.password).pipe((0, rxjs_1.map)((match) => {
+                if (match) {
+                    const { password, ...result } = user;
+                    return result;
+                }
+                else {
+                    throw console_1.error;
+                }
+            }));
+        }));
+    }
+    getUserByEmail(email) {
+        return (0, rxjs_1.from)(this.userRepository.findOne({
+            where: {
+                email
+            }
+        }));
+    }
+    updateUserRole(id, user) {
         return (0, rxjs_1.from)(this.userRepository.update(id, user));
     }
 };
 exports.UserService = UserService;
 exports.UserService = UserService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(user_entitiy_1.UserEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entitiy_1.UserEntity)),
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        typeorm_2.Repository])
 ], UserService);
 //# sourceMappingURL=user.service.js.map
