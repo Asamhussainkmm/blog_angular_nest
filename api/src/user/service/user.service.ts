@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../model/user.entitiy';
 import { Repository } from 'typeorm';
 import { User } from '../model/user.interface';
-import { Observable, from } from 'rxjs';
+import { Observable, from, map } from 'rxjs';
+import { IPaginationOptions, Pagination, paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,14 @@ export class UserService {
 
     getAllUsers():Observable<User[]>{
         return from(this.userRepository.find());
+    }
+
+    paginate(option: IPaginationOptions): Observable<Pagination<User>>{
+        return from(paginate<User>(this.userRepository, option)).pipe(
+            map((usersPageable: Pagination<User>) => {
+                return usersPageable;
+            })
+        )
     }
 
     deleteUserById(id:number): Observable<any>{

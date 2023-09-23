@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const user_entitiy_1 = require("../model/user.entitiy");
 const typeorm_2 = require("typeorm");
 const rxjs_1 = require("rxjs");
+const nestjs_typeorm_paginate_1 = require("nestjs-typeorm-paginate");
 let UserService = class UserService {
     constructor(userRepository) {
         this.userRepository = userRepository;
@@ -34,6 +35,11 @@ let UserService = class UserService {
     }
     getAllUsers() {
         return (0, rxjs_1.from)(this.userRepository.find());
+    }
+    paginate(option) {
+        return (0, rxjs_1.from)((0, nestjs_typeorm_paginate_1.paginate)(this.userRepository, option)).pipe((0, rxjs_1.map)((usersPageable) => {
+            return usersPageable;
+        }));
     }
     deleteUserById(id) {
         return (0, rxjs_1.from)(this.userRepository.delete(id));

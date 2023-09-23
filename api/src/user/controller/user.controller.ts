@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { User } from '../model/user.interface';
 import { Observable } from 'rxjs';
 import { UserService } from '../service/user.service';
+import { Pagination } from 'nestjs-typeorm-paginate';
 
 @Controller('users')
 export class UserController {
@@ -19,8 +20,9 @@ export class UserController {
     }
 
     @Get()
-    getAllUsers(): Observable<User[]>{
-        return this.userService.getAllUsers();
+    getAllUsers(@Query('page') page: number=1, @Query('limit') limit: number = 10): Observable<Pagination<User>>{
+        limit = limit > 100 ? 100 : limit;
+        return this.userService.paginate({page: Number(page), limit: Number(limit), route:"http://localhost:3000/users"})
     }
 
     @Delete(':id')

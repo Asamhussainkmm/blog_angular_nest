@@ -26,8 +26,9 @@ let UserController = class UserController {
     getUserById(id) {
         return this.userService.getUserById(id);
     }
-    getAllUsers() {
-        return this.userService.getAllUsers();
+    getAllUsers(page = 1, limit = 10) {
+        limit = limit > 100 ? 100 : limit;
+        return this.userService.paginate({ page: Number(page), limit: Number(limit), route: "http://localhost:3000/users" });
     }
     deleteUser(id) {
         return this.userService.deleteUserById(id);
@@ -53,8 +54,10 @@ __decorate([
 ], UserController.prototype, "getUserById", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", rxjs_1.Observable)
 ], UserController.prototype, "getAllUsers", null);
 __decorate([
